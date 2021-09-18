@@ -1,0 +1,107 @@
+included:
+    - Source
+    - Sources
+    - Src
+    - Test
+    - Tests
+
+# raw_value_for_camel_cased_codable_enum ?
+
+opt_in_rules:
+    - anyobject_protocol
+    - array_init
+    - closure_end_indentation
+    - closure_spacing
+    - collection_alignment
+    - contains_over_filter_count
+    - contains_over_filter_is_empty
+    - contains_over_first_not_nil
+    - contains_over_range_nil_comparison
+    - convenience_type
+    - discouraged_assert #This is missing from 0.42.0 for some reason...
+    - empty_collection_literal
+    - empty_count
+    - empty_string
+    - empty_xctest_method
+    - expiring_todo
+    - explicit_init
+    - fatal_error_message
+    - file_name_no_space
+    - first_where
+    - flatmap_over_map_reduce
+    - for_where
+    - identical_operands
+    - implicit_return
+    - last_where
+    - legacy_multiple
+    - legacy_random
+    - literal_expression_end_indentation
+    #- missing_docs
+    - modifier_order
+    - multiline_arguments
+    - multiline_arguments_brackets
+    - multiline_function_chains
+    - multiline_literal_brackets
+    - multiline_parameters
+    - multiline_parameters_brackets
+    - nslocalizedstring_key
+    - object_literal
+    - operator_usage_whitespace
+    - overridden_super_call
+    - pattern_matching_keywords
+    - prefer_self_type_over_type_of_self
+    - prefer_zero_over_explicit_init
+    - prohibited_interface_builder
+    - prohibited_super_call
+    - reduce_into
+    - redundant_nil_coalescing
+    - redundant_type_annotation
+    - single_test_class
+    - sorted_first_last
+    - sorted_imports
+    - switch_case_on_newline
+    - toggle_bool
+    #- trailing_closure
+    - unneeded_parentheses_in_closure_argument
+    - untyped_error_in_catch
+    - unused_import
+    - vertical_parameter_alignment_on_call
+    - vertical_whitespace_closing_braces
+    - vertical_whitespace_opening_braces
+    - xct_specific_matcher
+
+disabled_rules:
+    - comment_spacing
+    - cyclomatic_complexity
+    - file_length
+    - force_cast
+    - force_try
+    - function_body_length
+    - function_parameter_count
+    - generic_type_name
+    - identifier_name
+    - large_tuple
+    - line_length
+    - nesting
+    - no_extension_access_modifier
+    - orphaned_doc_comment
+    - todo
+    - trailing_comma
+    - type_body_length
+    - type_name
+
+custom_rules:
+    already_true:
+        regex: "== true"
+        message: "Don't compare to true, just use the bool value or nil coalesce."
+    already_bool:
+        regex: "== false"
+        message: "Don't compare to false, just use !value or nil coalesce."
+    #attribues_on_own_line:
+        # TODO: Add this to regex somehow but in a working way...
+        # It should be put in after the @. We want to explicitly not error on escaping, autoclosure, or Result Builders
+        # # [^(autoclosure|escaping|([A-Z_][a-zA-Z_0-9]*Builder))]
+        # TODO: Get this to prevent more attributes on the same line...
+        # this will require knowing how to not trip on autoclosure, escaping, or builders since they can be applied on the same line.
+        #regex: '^\w*[^//][^\n]*?[^//]@[a-zA-Z_][^(\n|//)]*?( var | let | struct | class | enum | protocol | func | init(\w)*<| init(\w)*\(| deinit | subscript(\w)*<| subscript(\w)*\()[^\n]*$'
+        #message: "Attributes and property wrappers should always be on their own line for types variables, types, and functions."
