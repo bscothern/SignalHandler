@@ -15,6 +15,153 @@ import Glibc
 /// Namespace of functions for working with signals.
 public enum Signals {}
 
+// MARK: - Typealiases
+extension Signals {
+#if canImport(Darwin)
+    @usableFromInline
+    static let _raise: (Int32) -> Int32 = Darwin.raise
+#elseif canImport(Glibc)
+    @usableFromInline
+    static let _raise: (Int32) -> Int32 = Glibc.raise
+#endif
+}
+
+// MARK: - Handle
+extension Signals {
+    public typealias SignalHandler = (Signal) -> Void
+
+    @usableFromInline
+    static var handlers: [Signal: SignalHandler] = [:]
+
+    @usableFromInline
+    static func handle(
+        signal: Signal,
+        flags: SignalHandlerFlag,
+        mask: sigset_t,
+        action: SignalHandler?
+    ) {
+        guard signal.canBeCaught else {
+            return
+        }
+
+        guard let action = action else {
+            defaultAction(for: signal)
+            return
+        }
+
+        handlers[signal] = action
+#if canImport(Darwin)
+        let sa_handler = __sigaction_u(__sa_handler: {
+            guard let signal = Signal(rawValue: $0) else {
+                return
+            }
+            Signals.handlers[signal]?(signal)
+        })
+#elseif canImport(Glibc)
+        #error("TODO SUPPORT LINUX")
+#endif
+
+        var actionHandler = sigaction(
+            __sigaction_u: sa_handler,
+            sa_mask: mask,
+            sa_flags: flags.rawValue
+        )
+        sigaction(signal.rawValue, &actionHandler, nil)
+    }
+
+    @inlinable
+    public static func handle(
+        signal: Signal,
+        flags: SignalHandlerFlag = .init(),
+        _ action: SignalHandler?
+    ) {
+        handle(
+            signal: signal,
+            flags: flags,
+            mask: [Signal](),
+            action
+        )
+    }
+
+    @inlinable
+    @_specialize(where Mask == [Signal])
+    public static func handle<Mask>(
+        signal: Signal,
+        flags: SignalHandlerFlag = .init(),
+        mask: Mask,
+        _ action: SignalHandler?
+    ) where Mask: Sequence, Mask.Element == Signal {
+        handle(
+            signal: signal,
+            flags: flags,
+            mask: mask.sigset,
+            action: action
+        )
+    }
+
+    @inlinable
+    public static func handle(
+        signals: Signal...,
+        flags: SignalHandlerFlag = .init(),
+        _ action: SignalHandler?
+    ) {
+        handle(
+            signals: signals,
+            flags: flags,
+            mask: [Signal](),
+            action
+        )
+    }
+
+    @inlinable
+    public static func handle<S>(
+        signals: S,
+        flags: SignalHandlerFlag = .init(),
+        _ action: SignalHandler?
+    ) where S: Sequence, S.Element == Signal {
+        handle(
+            signals: signals,
+            flags: flags,
+            mask: [Signal](),
+            action
+        )
+    }
+
+    @inlinable
+    @_specialize(where Mask == [Signal])
+    public static func handle<Mask>(
+        signals: Signal...,
+        flags: SignalHandlerFlag = .init(),
+        mask: Mask,
+        _ action: SignalHandler?
+    ) where Mask: Sequence, Mask.Element == Signal {
+        handle(
+            signals: signals,
+            flags: flags,
+            mask: mask,
+            action
+        )
+    }
+
+    @inlinable
+    @_specialize(where S == [Signal], Mask == [Signal])
+    public static func handle<S, Mask>(
+        signals: S,
+        flags: SignalHandlerFlag = .init(),
+        mask: Mask,
+        _ action: SignalHandler?
+    ) where S: Sequence, S.Element == Signal, Mask: Sequence, Mask.Element == Signal {
+        for signal in signals {
+            handle(
+                signal: signal,
+                flags: flags,
+                mask: mask.sigset,
+                action: action
+            )
+        }
+    }
+}
+
 // MARK: - Default Action
 extension Signals {
     @inlinable
@@ -22,7 +169,8 @@ extension Signals {
         guard _signal.canBeIgnored && _signal.canBeCaught else {
             return
         }
-        signal(Int32(_signal.rawValue), SIG_DFL)
+        signal(_signal.rawValue, SIG_DFL)
+        handlers.removeValue(forKey: _signal)
     }
 
     @inlinable
@@ -90,7 +238,7 @@ extension Signals {
 
     @inlinable
     public static func block<S>(signals: S) where S: Sequence, S.Element == Signal {
-        var setToBlock = signals.lazy.filter(\.canBeIgnored).sigset
+        var setToBlock = signals.sigset
         block(sigset: &setToBlock)
     }
 }
@@ -149,7 +297,15 @@ extension Signals {
 
     @inlinable
     public static func mask<S>(signals: S) where S: Sequence, S.Element == Signal {
-        var setToBlock = signals.lazy.filter(\.canBeIgnored).sigset
+        var setToBlock = signals.sigset
         mask(sigset: &setToBlock)
+    }
+}
+
+// MARK: - Raise
+extension Signals {
+    @inlinable
+    public static func raise(signal: Signal) {
+        _ = _raise(signal.rawValue)
     }
 }

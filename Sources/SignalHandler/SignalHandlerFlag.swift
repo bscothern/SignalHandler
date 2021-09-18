@@ -1,5 +1,5 @@
 //
-//  SignalActionFlag.swift
+//  SignalHandlerFlag.swift
 //  SignalHandler
 //
 //  Created by Braden Scothern on 9/17/21.
@@ -13,7 +13,7 @@ import Glibc
 #endif
 
 // TODO: update these docs as things get fully put together
-public struct SignalActionFlag: OptionSet, RawRepresentable, CaseIterable {
+public struct SignalHandlerFlag: OptionSet, RawRepresentable {
     public let rawValue: CInt
 
     public init(rawValue: CInt) {
@@ -38,19 +38,11 @@ public struct SignalActionFlag: OptionSet, RawRepresentable, CaseIterable {
 
     /// If this bit is set, the handler function is assumed to be pointed to by the sa_sigaction member of struct sigaction and should match the prototype shown above or as below in EXAMPLES.
     /// This bit should not be set when assigning SIG_DFL or SIG_IGN.
+    @available(*, unavailable, message: "Not currently supported")
     public static let restart = Self(rawValue: SA_RESTART)
 
     /// If this bit is set, the handler function is assumed to be pointed to by the sa_sigaction member of struct sigaction and should match the prototype shown above or as below in EXAMPLES.
     /// This bit should not be set when assigning SIG_DFL or SIG_IGN.
+    @available(*, unavailable, message: "Not currently supported")
     public static let info = Self(rawValue: SA_SIGINFO)
-
-    public static let allCases: [Self] = [
-        noChildStop,
-        noChildWait,
-        onStack,
-        noDefer,
-        resetHandler,
-        restart,
-        info,
-    ]
 }
