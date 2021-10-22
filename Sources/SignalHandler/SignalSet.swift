@@ -12,7 +12,7 @@ import Darwin
 import Glibc
 #endif
 
-public struct SignalSet {
+public struct SignalSet: Hashable {
     @usableFromInline
     var sigset: sigset_t
 }
@@ -33,9 +33,16 @@ extension SignalSet {
     public init<S>(signals: S) where S: Sequence, S.Element == Signal {
         var sigset = sigset_t()
         for signal in signals {
-            sigset |= UInt32(bitPattern: signal.rawValue)
+            sigset |= .init(1 << (signal.rawValue - 1))
         }
         self.init(sigset)
+    }
+}
+
+extension SignalSet: ExpressibleByArrayLiteral {
+    @inlinable
+    public init(arrayLiteral elements: Signal...) {
+        self.init(signals: elements)
     }
 }
 
@@ -49,6 +56,7 @@ extension SignalSet: Collection {
             self.offset = offset
         }
 
+        @inlinable
         public static func < (lhs: Self, rhs: Self) -> Bool {
             lhs.offset < rhs.offset
         }
@@ -65,17 +73,22 @@ extension SignalSet: Collection {
         if leadingZeroBitCount == sigset.bitWidth {
             return startIndex
         } else {
-            return .init(sigset.bitWidth - leadingZeroBitCount + 1)
+            return .init(sigset.bitWidth - leadingZeroBitCount)
         }
     }
 
     public func index(after i: Index) -> Index {
-        let offsetToNext = (sigset >> (i.offset)).trailingZeroBitCount + 1
-        return .init(offsetToNext)
+        let shiftOutPreviousValues = sigset >> (i.offset + 1)
+        guard shiftOutPreviousValues != 0 else {
+            return endIndex
+        }
+        let offsetToNext = shiftOutPreviousValues.trailingZeroBitCount + 1
+        return .init(offsetToNext + i.offset)
     }
 
     public subscript(position: Index) -> Signal {
-        let value: CInt = 1 << position.offset
-        return Signal(rawValue: value)!
+        let maskedValue = sigset & (1 << position.offset)
+        precondition(maskedValue != 0, "Invalid index used with SignalSet. It points to a value not in this instance.")
+        return Signal(rawValue: .init(maskedValue.trailingZeroBitCount + 1))!
     }
 }

@@ -49,12 +49,24 @@ let package = Package(
         ),
     ],
     dependencies: [
+        .package(
+            name: "LoftTest_StandardLibraryProtocolChecks",
+            url: "https://github.com/loftware/StandardLibraryProtocolChecks",
+            .exact("0.1.0")
+        ),
     ],
     targets: [
         .target(
             name: "SignalHandler",
             dependencies: [],
             swiftSettings: disabledSignals
+        ),
+        .testTarget(
+            name: "SignalHandlerTests",
+            dependencies: [
+                .target(name: "SignalHandler"),
+                .product(name: "LoftTest_StandardLibraryProtocolChecks", package: "LoftTest_StandardLibraryProtocolChecks"),
+            ]
         ),
     ]
 )
