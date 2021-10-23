@@ -14,10 +14,10 @@ import Glibc
 
 extension Signals {
     @inlinable
-    public var currentBlockedSignals: Set<Signal> {
+    public var currentBlockedSignals: SignalSet {
         var blockedSignals = sigset_t()
         sigprocmask(0, nil, &blockedSignals)
-        return Signal.parse(mask: blockedSignals)
+        return SignalSet(blockedSignals)
     }
 
     @usableFromInline

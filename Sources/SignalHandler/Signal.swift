@@ -842,28 +842,21 @@ extension Signal {
 }
 
 extension Signal {
-#if false
-// TODO: Support this. It probably needs a customs truct instead of using Set<Signal>
     @inlinable
-    public static var pending: Set<Signal> {
+    public static var pending: SignalSet {
         var pending = sigset_t()
         sigpending(&pending)
-        return parse(mask: pending)
-    }
-#endif
-
-    @usableFromInline
-    static func parse(mask: sigset_t) -> Set<Signal> {
-        .init(allCases.filter { UInt32($0.rawValue) & mask != 0 })
+        return SignalSet(pending)
     }
 }
 
+// MARK: - Other Extensions
 extension Sequence where Element == Signal {
     @usableFromInline
     var sigset: sigset_t {
         var set = sigset_t()
         for signal in self {
-            set |= sigset_t(signal.rawValue)
+            set |= (1 << (signal.rawValue - 1))
         }
         return set
     }
