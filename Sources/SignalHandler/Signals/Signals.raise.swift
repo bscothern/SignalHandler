@@ -13,6 +13,9 @@ import Glibc
 #endif
 
 extension Signals {
+    /// Sends a `Signal` to the current thread.
+    ///
+    /// - Parameter signal: The `Signal` to raise to the current thread.
     @inlinable
     public static func raise(_ signal: Signal) {
 #if canImport(Darwin)

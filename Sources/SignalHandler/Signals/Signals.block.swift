@@ -13,31 +13,32 @@ import Glibc
 #endif
 
 extension Signals {
-    @inlinable
-    public var currentBlockedSignals: SignalSet {
-        var blockedSignals = sigset_t()
-        sigprocmask(0, nil, &blockedSignals)
-        return SignalSet(blockedSignals)
-    }
-
     @usableFromInline
-    @inline(__always)
     static func block(sigset: UnsafeMutablePointer<sigset_t>) {
         sigprocmask(SIG_BLOCK, sigset, nil)
     }
 
+    /// Block a `Signal`.
+    ///
+    /// - Parameter signal: The `Signal` to block.
     @inlinable
     public static func block(_ signal: Signal) {
-        var setToBlock = sigset_t(signal.rawValue)
+        var setToBlock = sigset_t.emptySet() | numericCast(signal.rawValue)
         block(sigset: &setToBlock)
     }
 
+    /// Blocks all input `Signal`s.
+    ///
+    /// - Parameter signals: The `Signal`s to block.
     @inlinable
     @_transparent
     public static func block(_ signals: Signal...) {
         block(signals)
     }
 
+    /// Blocks all `Signal`s in a sequence.
+    ///
+    /// - Parameter signals: The `Signal`s to block.
     @inlinable
     @_specialize(where S == [Signal])
     public static func block<S>(_ signals: S) where S: Sequence, S.Element == Signal {

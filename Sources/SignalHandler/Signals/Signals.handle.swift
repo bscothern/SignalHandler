@@ -15,10 +15,17 @@ import Glibc
 import Foundation
 
 extension Signals {
-    public typealias SignalHandler = (Signal) -> Void
+    /// The type of function called when a ``Signal`` is raised.
+    ///
+    /// - Parameter raised: The ``Signal`` that was raised causing this `SignalHandler` to execute.
+    public typealias SignalHandler = (_ raised: Signal) -> Void
 
     @usableFromInline
-    static var handlers: [Signal: SignalHandler] = [:]
+    static var handlers: [Signal: SignalHandler] = {
+        var handlers: [Signal: SignalHandler] = [:]
+        handlers.reserveCapacity(Signal.allCases.count)
+        return handlers
+    }()
 
     @usableFromInline
     static func handle(
@@ -68,7 +75,7 @@ extension Signals {
     /// - Note: This uses the C function `sigaction`.
     ///
     /// - Parameters:
-    ///   - signal: The `Signal` the handler is for.
+    ///   - signal: The ``Signal`` the handler is for.
     ///   - flags: Any flags to set on the handler.
     ///   - action: The action to perform when the `signal` is raised.
     @inlinable
@@ -95,10 +102,10 @@ extension Signals {
     /// - Note: This uses the C function `sigaction`.
     ///
     /// - Parameters:
-    ///   - signal: The `Signal` the handler is for.
+    ///   - signal: The ``Signal`` the handler is for.
     ///   - flags: Any flags to set on the handler.
     ///   - mask: The signal mask to apply for the scope of the handler.
-    ///     See `Signals.mask` functions for more information.
+    ///     See ``mask(_:)-8lag2`` functions for more information.
     ///   - action: The action to perform when the `signal` is raised.
     @inlinable
     @_specialize(where Mask == [Signal])
@@ -126,7 +133,7 @@ extension Signals {
     /// - Note: This uses the C function `sigaction`.
     ///
     /// - Parameters:
-    ///   - signals: The `Signal`s the handler is for.
+    ///   - signals: The ``Signal``s the handler is for.
     ///   - flags: Any flags to set on the handler.
     ///   - action: The action to perform when the `signal` is raised.
     @inlinable
@@ -153,9 +160,9 @@ extension Signals {
     /// - Note: This uses the C function `sigaction`.
     ///
     /// - Parameters:
-    ///   - signals: The `Signal`s the handler is for.
+    ///   - signals: The ``Signal``s the handler is for.
     ///   - flags: Any flags to set on the handler.
-    ///   - action: The action to perform when the `signal` is raised.
+    ///   - action: The action to perform when the ``Signal`` is raised.
     @inlinable
     public static func handle<S>(
         _ signals: S,
@@ -180,11 +187,11 @@ extension Signals {
     /// - Note: This uses the C function `sigaction`.
     ///
     /// - Parameters:
-    ///   - signals: The `Signal`s the handler is for.
+    ///   - signals: The ``Signal``s the handler is for.
     ///   - flags: Any flags to set on the handler.
     ///   - mask: The signal mask to apply for the scope of the handler.
-    ///     See `Signals.mask` functions for more information.
-    ///   - action: The action to perform when the `signal` is raised.
+    ///     See ``mask(_:)-8lag2`` functions for more information.
+    ///   - action: The action to perform when the ``Signal`` is raised.
     @inlinable
     @_specialize(where Mask == [Signal])
     public static func handle<Mask>(
@@ -211,11 +218,11 @@ extension Signals {
     /// - Note: This uses the C function `sigaction`.
     ///
     /// - Parameters:
-    ///   - signals: The `Signal`s the handler is for.
+    ///   - signals: The ``Signal``s the handler is for.
     ///   - flags: Any flags to set on the handler.
     ///   - mask: The signal mask to apply for the scope of the handler.
-    ///     See `Signals.mask` functions for more information.
-    ///   - action: The action to perform when the `signal` is raised.
+    ///     See ``mask(_:)-8lag2`` functions for more information.
+    ///   - action: The action to perform when the ``Signal`` is raised.
     @inlinable
     @_specialize(where S == [Signal], Mask == [Signal])
     public static func handle<S, Mask>(

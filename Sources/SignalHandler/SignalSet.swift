@@ -12,28 +12,45 @@ import Darwin
 import Glibc
 #endif
 
+/// A nicer version of `sigset_t` which is used to work with multiple ``Signal``s at the same time.
 public struct SignalSet: Hashable {
     @usableFromInline
     var sigset: sigset_t
 }
 
 extension SignalSet {
+    @usableFromInline
+    init() {
+        sigset = .emptySet()
+    }
+
+    /// Create a `SignalSet` from a `sigset_t`.
+    ///
+    /// - Parameter sigset: The `sigset_t` that matches the desired `SignalSet`.
     @inlinable
-    public init(_ sigset: sigset_t) {
+    public init(_ sigset: __owned sigset_t) {
+        // This uses __owned so that the compiler more strictly moves values into the SignalSet being constructed.
+        // This is important to reduce the chance of non-stack allocations during signal handler execution.
         self.sigset = sigset
     }
 
+    /// Create a `SignalSet` from input `Signal`s.
+    ///
+    /// - Parameter signals: The `Signal`s to put in the `SignalSet`.
     @inlinable
     public init(signals: Signal...) {
         self.init(signals: signals)
     }
 
+    /// Create a `SignalSet` from `Signal`s.
+    ///
+    /// - Parameter signals: The `Signal`s to put in the `SignalSet`.
     @inlinable
     @_specialize(where S == [Signal])
     public init<S>(signals: S) where S: Sequence, S.Element == Signal {
-        var sigset = sigset_t()
+        var sigset = sigset_t.emptySet()
         for signal in signals {
-            sigset |= .init(1 << (signal.rawValue - 1))
+            sigaddset(&sigset, signal.rawValue)
         }
         self.init(sigset)
     }
@@ -89,6 +106,13 @@ extension SignalSet: Collection {
     public subscript(position: Index) -> Signal {
         let maskedValue = sigset & (1 << position.offset)
         precondition(maskedValue != 0, "Invalid index used with SignalSet. It points to a value not in this instance.")
-        return Signal(rawValue: .init(maskedValue.trailingZeroBitCount + 1))!
+        let value = Signal(rawValue: .init(maskedValue.trailingZeroBitCount + 1))!
+        assert(
+            withUnsafePointer(to: sigset) { sigset in
+                sigismember(sigset, value.rawValue) == 1
+            },
+            "sigset_t offset values don't match signal values on this platform."
+        )
+        return value
     }
 }

@@ -842,9 +842,10 @@ extension Signal {
 }
 
 extension Signal {
+    /// Signals currently pending delivery to the calling process.
     @inlinable
     public static var pending: SignalSet {
-        var pending = sigset_t()
+        var pending = sigset_t.emptySet()
         sigpending(&pending)
         return SignalSet(pending)
     }
@@ -852,11 +853,12 @@ extension Signal {
 
 // MARK: - Other Extensions
 extension Sequence where Element == Signal {
+    /// Create a `sigset_t` representation of the `Seqeunce`.
     @usableFromInline
     var sigset: sigset_t {
-        var set = sigset_t()
+        var set = sigset_t.emptySet()
         for signal in self {
-            set |= (1 << (signal.rawValue - 1))
+            sigaddset(&set, signal.rawValue)
         }
         return set
     }

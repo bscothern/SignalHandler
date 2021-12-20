@@ -12,7 +12,7 @@ final class SignalSetTests: XCTestCase {
                 .map {
                     sigset_t(1 << ($0 - 1))
                 }
-                .reduce(into: sigset_t(), |=)
+                .reduce(into: sigset_t.emptySet(), |=)
 
             let fromArray = SignalSet(signals: signals)
             let fromSigset_t = SignalSet(sigset)
@@ -23,7 +23,7 @@ final class SignalSetTests: XCTestCase {
             fromSigset_t.checkHashableLaws(equal: fromArray)
         }
     }
-    
+
     func testEmptySignalSet() {
         let signalSet = SignalSet(.init())
         XCTAssertEqual(signalSet.startIndex, signalSet.endIndex)
@@ -34,20 +34,20 @@ final class SignalSetTests: XCTestCase {
         XCTAssertEqual(signalSet.startIndex.offset, 0)
         XCTAssertEqual(signalSet.endIndex.offset, Signal.allCases.count)
     }
-    
+
     func testInitWithVariadics() {
         let signalSet = SignalSet(signals: .abort, .floatingPointException, .illegalInstruction, .interrupt, .segmentationViolation, .termination)
         signalSet.checkCollectionLaws(expecting: [.abort, .floatingPointException, .illegalInstruction, .interrupt, .segmentationViolation, .termination].sortedByRawValue())
     }
-    
+
     func testInitWithArrayLiteral() {
         let signalSet: SignalSet = [.abort, .floatingPointException, .illegalInstruction, .interrupt, .segmentationViolation, .termination]
         signalSet.checkCollectionLaws(expecting: [.abort, .floatingPointException, .illegalInstruction, .interrupt, .segmentationViolation, .termination].sortedByRawValue())
     }
 
     func testIndices() {
-        for bit in 0..<sigset_t().bitWidth {
-            let sigset = sigset_t(1 << bit)
+        for bit in 0..<sigset_t.emptySet().bitWidth {
+            let sigset = sigset_t.emptySet() | numericCast(1 << bit)
             let signalSet = SignalSet(sigset)
             let startIndex = signalSet.startIndex
             let endIndex = signalSet.endIndex
